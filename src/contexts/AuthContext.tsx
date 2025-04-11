@@ -2,17 +2,13 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-
-// Define the shape of our user object
-interface User {
-  id: string;
-  name: string;
-  email: string;
-}
+import { supabase } from "@/integrations/supabase/client";
+import { User, Session } from "@supabase/supabase-js";
 
 // Define the shape of our auth context
 interface AuthContextType {
   user: User | null;
+  session: Session | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -23,72 +19,101 @@ interface AuthContextType {
 // Create the context with a default value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user data (for demo purposes)
-const MOCK_USERS = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john@example.com",
-    password: "password123",
-  },
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if user is already logged in on mount
+  // Set up Auth state listener and check for existing session
   useEffect(() => {
-    const storedUser = localStorage.getItem("todoProUser");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Failed to parse stored user", error);
-        localStorage.removeItem("todoProUser");
+    // First set up the auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        if (event === 'SIGNED_IN') {
+          // Don't call Supabase directly in the callback
+          // Use setTimeout to avoid potential deadlocks
+          setTimeout(() => {
+            toast({
+              title: "Logged in successfully",
+              description: "Welcome to To-Do Pro+!",
+            });
+          }, 0);
+        }
       }
-    }
-    setIsLoading(false);
-  }, []);
+    );
 
-  // Login function - mock implementation
-  const login = async (email: string, password: string) => {
+    // Then check for existing session
+    const initializeAuth = async () => {
+      try {
+        setIsLoading(true);
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        setSession(initialSession);
+        setUser(initialSession?.user ?? null);
+      } catch (error) {
+        console.error("Error checking auth session:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [toast]);
+
+  // Register function
+  const register = async (name: string, email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      
-      // Mock validation
-      const foundUser = MOCK_USERS.find(
-        (u) => u.email === email && u.password === password
-      );
-      
-      if (!foundUser) {
-        throw new Error("Invalid email or password");
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
       }
-      
-      // Omit password before storing
-      const { password: _, ...userWithoutPassword } = foundUser;
-      
-      // Store user in local storage
-      localStorage.setItem("todoProUser", JSON.stringify(userWithoutPassword));
-      setUser(userWithoutPassword);
-      
+
+      // Create profile entry
+      if (data.user) {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: data.user.id,
+            name,
+          });
+
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+        }
+      }
+
       toast({
-        title: "Login successful",
-        description: `Welcome back, ${foundUser.name}!`,
+        title: "Registration successful",
+        description: "You can now log in with your credentials",
       });
       
-      navigate("/dashboard");
-    } catch (error) {
-      console.error("Login failed", error);
+      navigate("/login");
+    } catch (error: any) {
+      console.error("Registration failed", error);
       toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "Please try again",
+        title: "Registration failed",
+        description: error.message || "Please try again",
         variant: "destructive",
       });
       throw error;
@@ -97,40 +122,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Register function - mock implementation
-  const register = async (name: string, email: string, password: string) => {
+  // Login function
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      
-      // Check if user already exists
-      if (MOCK_USERS.some((u) => u.email === email)) {
-        throw new Error("User with this email already exists");
-      }
-      
-      // In a real app, we would send this to an API
-      // For demo, just add to our mock data
-      const newUser = {
-        id: String(MOCK_USERS.length + 1),
-        name,
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-      };
-      
-      MOCK_USERS.push(newUser);
-      
-      toast({
-        title: "Registration successful",
-        description: "You can now log in with your credentials",
       });
-      
-      navigate("/login");
-    } catch (error) {
-      console.error("Registration failed", error);
+
+      if (error) {
+        throw error;
+      }
+
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Login failed", error);
       toast({
-        title: "Registration failed",
-        description: error instanceof Error ? error.message : "Please try again",
+        title: "Login failed",
+        description: error.message || "Please check your credentials and try again",
         variant: "destructive",
       });
       throw error;
@@ -140,18 +150,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   // Logout function
-  const logout = () => {
-    localStorage.removeItem("todoProUser");
-    setUser(null);
-    toast({
-      title: "Logged out",
-      description: "You have been logged out successfully",
-    });
-    navigate("/login");
+  const logout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        throw error;
+      }
+      
+      setUser(null);
+      setSession(null);
+      
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully",
+      });
+      
+      navigate("/login");
+    } catch (error: any) {
+      console.error("Logout failed", error);
+      toast({
+        title: "Logout failed",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    }
   };
 
   const value = {
     user,
+    session,
     login,
     register,
     logout,

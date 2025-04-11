@@ -15,8 +15,8 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
-  const [email, setEmail] = useState("john@example.com");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const { login } = useAuth();
@@ -52,7 +52,7 @@ const Login = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="john@example.com"
+                  placeholder="your@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -76,11 +76,6 @@ const Login = () => {
                   {error}
                 </div>
               )}
-              <div className="text-xs text-muted-foreground">
-                <p>Demo Credentials:</p>
-                <p>Email: john@example.com</p>
-                <p>Password: password123</p>
-              </div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-2">
               <Button
