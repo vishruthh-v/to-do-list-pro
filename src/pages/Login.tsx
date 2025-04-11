@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -20,6 +21,7 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const { login } = useAuth();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,8 +30,18 @@ const Login = () => {
 
     try {
       await login(email, password);
+      // Login successful
+      toast({
+        title: "Login successful",
+        description: "Welcome back!",
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+      console.error("Login error:", err);
+      setError(
+        err instanceof Error 
+          ? err.message 
+          : "Login failed. Please check your email and password and try again."
+      );
     } finally {
       setIsSubmitting(false);
     }

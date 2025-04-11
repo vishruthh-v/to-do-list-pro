@@ -91,14 +91,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Create profile entry
       if (data.user) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: data.user.id,
-            name,
-          });
+        try {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .insert({
+              id: data.user.id,
+              name,
+            });
 
-        if (profileError) {
+          if (profileError) {
+            console.error("Error creating profile:", profileError);
+          }
+        } catch (profileError) {
           console.error("Error creating profile:", profileError);
         }
       }
