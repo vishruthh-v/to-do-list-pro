@@ -1,6 +1,8 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Define task interface
 export interface Task {
@@ -27,40 +29,6 @@ interface TaskContextType {
 // Create context
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
-// Sample initial tasks
-const SAMPLE_TASKS: Task[] = [
-  {
-    id: "1",
-    title: "Complete project proposal",
-    description: "Write the first draft of the project proposal",
-    priority: "high",
-    status: "todo",
-    dueDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
-    createdAt: new Date().toISOString(),
-    userId: "1",
-  },
-  {
-    id: "2",
-    title: "Schedule team meeting",
-    description: "Set up a meeting with the project team",
-    priority: "medium",
-    status: "completed",
-    dueDate: new Date().toISOString(), // Today
-    createdAt: new Date().toISOString(),
-    userId: "1",
-  },
-  {
-    id: "3",
-    title: "Research competitor products",
-    description: "Analyze top 3 competitors and document findings",
-    priority: "low",
-    status: "in-progress",
-    dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
-    createdAt: new Date().toISOString(),
-    userId: "1",
-  },
-];
-
 // Provider component
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -68,70 +36,200 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
 
-  // Load tasks from localStorage on mount
+  // Function to transform Supabase task format to our app format
+  const transformTask = (task: any): Task => ({
+    id: task.id,
+    title: task.title,
+    description: task.description || "",
+    priority: task.priority as "low" | "medium" | "high",
+    status: task.status as "todo" | "in-progress" | "completed",
+    dueDate: task.due_date,
+    createdAt: task.created_at,
+    userId: task.user_id,
+  });
+
+  // Load tasks from Supabase when authenticated
   useEffect(() => {
-    const storedTasks = localStorage.getItem("todoProTasks");
-    if (storedTasks) {
-      try {
-        setTasks(JSON.parse(storedTasks));
-      } catch (error) {
-        console.error("Failed to parse stored tasks", error);
-        // Initialize with sample tasks if parsing fails
-        setTasks(SAMPLE_TASKS);
-        localStorage.setItem("todoProTasks", JSON.stringify(SAMPLE_TASKS));
+    const fetchTasks = async () => {
+      if (!isAuthenticated || !user) {
+        setIsLoading(false);
+        return;
       }
-    } else {
-      // Initialize with sample tasks if no tasks are stored
-      setTasks(SAMPLE_TASKS);
-      localStorage.setItem("todoProTasks", JSON.stringify(SAMPLE_TASKS));
-    }
-    setIsLoading(false);
-  }, []);
 
-  // Save tasks to localStorage whenever tasks change
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem("todoProTasks", JSON.stringify(tasks));
-    }
-  }, [tasks, isLoading]);
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from("tasks")
+          .select("*")
+          .order("created_at", { ascending: false });
 
-  // Add a new task
-  const addTask = (task: Omit<Task, "id" | "createdAt" | "userId">) => {
-    const newTask: Task = {
-      ...task,
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      userId: "1", // Mock user ID
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          setTasks(data.map(transformTask));
+        }
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+        toast({
+          title: "Error fetching tasks",
+          description: "There was an error loading your tasks.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    setTasks((prev) => [...prev, newTask]);
-    toast({
-      title: "Task added",
-      description: "Your task has been added successfully",
-    });
+    fetchTasks();
+
+    // Set up realtime subscription for tasks
+    const channel = supabase
+      .channel("public:tasks")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tasks" },
+        (payload) => {
+          console.log("Realtime change:", payload);
+          fetchTasks(); // Refresh tasks when any change happens
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAuthenticated, user, toast]);
+
+  // Add a new task
+  const addTask = async (task: Omit<Task, "id" | "createdAt" | "userId">) => {
+    if (!isAuthenticated || !user) {
+      toast({
+        title: "Authentication required",
+        description: "You must be logged in to add tasks.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase.from("tasks").insert({
+        title: task.title,
+        description: task.description,
+        priority: task.priority,
+        status: task.status,
+        due_date: task.dueDate,
+        user_id: user.id,
+      }).select().single();
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        const newTask = transformTask(data);
+        setTasks((prev) => [newTask, ...prev]);
+        toast({
+          title: "Task added",
+          description: "Your task has been added successfully",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding task:", error);
+      toast({
+        title: "Error adding task",
+        description: "There was an error adding your task.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Update an existing task
-  const updateTask = (id: string, taskData: Partial<Task>) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id ? { ...task, ...taskData } : task
-      )
-    );
-    toast({
-      title: "Task updated",
-      description: "Your task has been updated successfully",
-    });
+  const updateTask = async (id: string, taskData: Partial<Task>) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "You must be logged in to update tasks.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Convert from our app's format to Supabase format
+      const supabaseTaskData: any = {};
+      if (taskData.title !== undefined) supabaseTaskData.title = taskData.title;
+      if (taskData.description !== undefined) supabaseTaskData.description = taskData.description;
+      if (taskData.priority !== undefined) supabaseTaskData.priority = taskData.priority;
+      if (taskData.status !== undefined) supabaseTaskData.status = taskData.status;
+      if (taskData.dueDate !== undefined) supabaseTaskData.due_date = taskData.dueDate;
+
+      const { error } = await supabase
+        .from("tasks")
+        .update(supabaseTaskData)
+        .eq("id", id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === id ? { ...task, ...taskData } : task
+        )
+      );
+      
+      toast({
+        title: "Task updated",
+        description: "Your task has been updated successfully",
+      });
+    } catch (error) {
+      console.error("Error updating task:", error);
+      toast({
+        title: "Error updating task",
+        description: "There was an error updating your task.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Delete a task
-  const deleteTask = (id: string) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id));
-    toast({
-      title: "Task deleted",
-      description: "Your task has been deleted successfully",
-    });
+  const deleteTask = async (id: string) => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "You must be logged in to delete tasks.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("tasks").delete().eq("id", id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update local state
+      setTasks((prev) => prev.filter((task) => task.id !== id));
+      
+      toast({
+        title: "Task deleted",
+        description: "Your task has been deleted successfully",
+      });
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      toast({
+        title: "Error deleting task",
+        description: "There was an error deleting your task.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Get tasks filtered by criteria
