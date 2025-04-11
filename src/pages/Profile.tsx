@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Card,
@@ -16,22 +16,40 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { Bell, Settings, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const { user, logout } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(user?.name || "");
+  
+  // Get user's name from user metadata or use email as fallback
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
+  
+  const [name, setName] = useState(userName);
   const [email, setEmail] = useState(user?.email || "");
 
-  const handleSaveProfile = () => {
-    // In a real app, we'd save to a backend
-    // For the demo, we'll just show a success message
-    setIsEditing(false);
-    toast({
-      title: "Profile updated",
-      description: "Your profile has been updated successfully",
-    });
+  const handleSaveProfile = async () => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { name }
+      });
+
+      if (error) throw error;
+
+      setIsEditing(false);
+      toast({
+        title: "Profile updated",
+        description: "Your profile has been updated successfully",
+      });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast({
+        title: "Update failed",
+        description: "There was an error updating your profile",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -95,13 +113,13 @@ const Profile = () => {
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-4">
                 <Avatar className="h-16 w-16">
-                  <AvatarImage src="" alt={user?.name} />
+                  <AvatarImage src="" alt={userName} />
                   <AvatarFallback className="text-lg">
-                    {user?.name.charAt(0).toUpperCase()}
+                    {userName.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h3 className="text-lg font-medium">{user?.name}</h3>
+                  <h3 className="text-lg font-medium">{userName}</h3>
                   <p className="text-sm text-muted-foreground">{user?.email}</p>
                 </div>
               </div>

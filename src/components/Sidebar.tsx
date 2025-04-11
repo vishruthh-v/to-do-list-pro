@@ -27,6 +27,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
+  // Get user's name from user metadata or use email as fallback
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
+  const userInitial = userName.charAt(0).toUpperCase();
+
   const navItems = [
     {
       title: "Dashboard",
@@ -115,11 +119,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ className }) => {
           <div className="mb-4 flex items-center gap-3 overflow-hidden rounded-lg bg-accent p-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
               <span className="text-sm font-medium">
-                {user.name.charAt(0).toUpperCase()}
+                {userInitial}
               </span>
             </div>
             <div className="truncate">
-              <p className="truncate text-sm font-medium">{user.name}</p>
+              <p className="truncate text-sm font-medium">{userName}</p>
               <p className="truncate text-xs text-muted-foreground">{user.email}</p>
             </div>
           </div>
