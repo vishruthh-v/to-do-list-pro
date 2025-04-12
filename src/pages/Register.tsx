@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 import { Mail, User, Lock, Globe, ArrowRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -56,11 +57,15 @@ const Register = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4 relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="w-full max-w-md">
-        <Card className="border-2 border-[rgb(192,166,49)]/20">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-center text-2xl font-bold">
+        <Card className="border-2 border-primary/20 shadow-xl">
+          <CardHeader className="space-y-1 bg-gradient-to-r from-primary/10 to-transparent rounded-t-lg">
+            <CardTitle className="text-center text-2xl font-bold text-foreground">
               Create an account
             </CardTitle>
             <CardDescription className="text-center">
@@ -70,8 +75,8 @@ const Register = () => {
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="flex items-center gap-2">
-                  <User className="h-4 w-4" />
+                <Label htmlFor="name" className="flex items-center gap-2 text-foreground">
+                  <User className="h-4 w-4 text-primary" />
                   Name
                 </Label>
                 <Input
@@ -80,12 +85,12 @@ const Register = () => {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="border-[rgb(192,166,49)]/30 focus-visible:ring-[rgb(192,166,49)]"
+                  className="border-primary/30 focus-visible:ring-primary"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email" className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
+                <Label htmlFor="email" className="flex items-center gap-2 text-foreground">
+                  <Mail className="h-4 w-4 text-primary" />
                   Email
                 </Label>
                 <Input
@@ -95,12 +100,12 @@ const Register = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="border-[rgb(192,166,49)]/30 focus-visible:ring-[rgb(192,166,49)]"
+                  className="border-primary/30 focus-visible:ring-primary"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="flex items-center gap-2">
-                  <Lock className="h-4 w-4" />
+                <Label htmlFor="password" className="flex items-center gap-2 text-foreground">
+                  <Lock className="h-4 w-4 text-primary" />
                   Password
                 </Label>
                 <Input
@@ -111,7 +116,7 @@ const Register = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={8}
-                  className="border-[rgb(192,166,49)]/30 focus-visible:ring-[rgb(192,166,49)]"
+                  className="border-primary/30 focus-visible:ring-primary"
                 />
                 <p className="text-xs text-muted-foreground">
                   Password must be at least 8 characters long
@@ -125,7 +130,7 @@ const Register = () => {
               
               <Button
                 type="submit"
-                className="w-full bg-[rgb(192,166,49)] hover:bg-[rgb(192,166,49)]/90"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Creating account..." : "Create account"}
@@ -141,19 +146,19 @@ const Register = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full border-[rgb(192,166,49)]/30"
+                className="w-full border-primary/30 hover:bg-primary/10"
                 onClick={handleGoogleLogin}
               >
-                <Globe className="mr-2 h-4 w-4" />
+                <Globe className="mr-2 h-4 w-4 text-primary" />
                 Continue with Google
               </Button>
             </CardContent>
-            <CardFooter className="flex flex-col space-y-2">
+            <CardFooter className="flex flex-col space-y-2 bg-gradient-to-r from-transparent to-primary/10 rounded-b-lg">
               <div className="text-center text-sm">
                 Already have an account?{" "}
                 <Link
                   to="/login"
-                  className="font-medium text-[rgb(192,166,49)] underline-offset-4 hover:underline"
+                  className="font-medium text-primary underline-offset-4 hover:underline"
                 >
                   Sign in
                 </Link>

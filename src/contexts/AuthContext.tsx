@@ -180,6 +180,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       if (error) {
+        // Check if it's a provider not enabled error
+        if (error.message.includes("provider is not enabled") || error.message.includes("Unsupported provider")) {
+          throw new Error("Google login is not enabled. Please contact the administrator to enable Google authentication.");
+        }
         throw error;
       }
     } catch (error: any) {
@@ -201,6 +205,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       if (error) {
+        // Check if it's a provider not enabled error
+        if (error.message.includes("provider is not enabled") || error.message.includes("Unsupported phone provider")) {
+          throw new Error("Phone authentication is not enabled. Please contact the administrator to enable phone authentication.");
+        }
         throw error;
       }
 

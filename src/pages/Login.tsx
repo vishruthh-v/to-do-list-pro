@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Phone, ArrowRight, Globe } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Login = () => {
   // Email login states
@@ -94,28 +95,32 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4 relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <div className="w-full max-w-md">
-        <Card className="border-2 border-[rgb(192,166,49)]/20">
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-center text-2xl font-bold">Login</CardTitle>
+        <Card className="border-2 border-primary/20 shadow-xl">
+          <CardHeader className="space-y-1 bg-gradient-to-r from-primary/10 to-transparent rounded-t-lg">
+            <CardTitle className="text-center text-2xl font-bold text-foreground">Login</CardTitle>
             <CardDescription className="text-center">
               Choose your preferred login method
             </CardDescription>
           </CardHeader>
           
           <Tabs defaultValue="email" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="email">Email</TabsTrigger>
-              <TabsTrigger value="phone">Phone</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted/50">
+              <TabsTrigger value="email" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Email</TabsTrigger>
+              <TabsTrigger value="phone" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Phone</TabsTrigger>
             </TabsList>
             
             <TabsContent value="email">
               <form onSubmit={handleEmailLogin}>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
+                    <Label htmlFor="email" className="flex items-center gap-2 text-foreground">
+                      <Mail className="h-4 w-4 text-primary" />
                       Email
                     </Label>
                     <Input
@@ -125,13 +130,13 @@ const Login = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
-                      className="border-[rgb(192,166,49)]/30 focus-visible:ring-[rgb(192,166,49)]"
+                      className="border-primary/30 focus-visible:ring-primary"
                     />
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="password" className="flex items-center gap-2">
-                        <Lock className="h-4 w-4" />
+                      <Label htmlFor="password" className="flex items-center gap-2 text-foreground">
+                        <Lock className="h-4 w-4 text-primary" />
                         Password
                       </Label>
                     </div>
@@ -142,7 +147,7 @@ const Login = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
-                      className="border-[rgb(192,166,49)]/30 focus-visible:ring-[rgb(192,166,49)]"
+                      className="border-primary/30 focus-visible:ring-primary"
                     />
                   </div>
                   
@@ -154,7 +159,7 @@ const Login = () => {
                   
                   <Button
                     type="submit"
-                    className="w-full bg-[rgb(192,166,49)] hover:bg-[rgb(192,166,49)]/90"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? "Signing in..." : "Sign in"}
@@ -168,8 +173,8 @@ const Login = () => {
               <form onSubmit={handlePhoneLogin}>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
+                    <Label htmlFor="phone" className="flex items-center gap-2 text-foreground">
+                      <Phone className="h-4 w-4 text-primary" />
                       Phone Number
                     </Label>
                     <Input
@@ -180,13 +185,13 @@ const Login = () => {
                       onChange={(e) => setPhone(e.target.value)}
                       required
                       disabled={isPhoneSubmitted}
-                      className="border-[rgb(192,166,49)]/30 focus-visible:ring-[rgb(192,166,49)]"
+                      className="border-primary/30 focus-visible:ring-primary"
                     />
                   </div>
                   
                   {isPhoneSubmitted && (
                     <div className="space-y-2">
-                      <Label htmlFor="code">Verification Code</Label>
+                      <Label htmlFor="code" className="text-foreground">Verification Code</Label>
                       <Input
                         id="code"
                         type="text"
@@ -194,7 +199,7 @@ const Login = () => {
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value)}
                         required
-                        className="border-[rgb(192,166,49)]/30 focus-visible:ring-[rgb(192,166,49)]"
+                        className="border-primary/30 focus-visible:ring-primary"
                       />
                     </div>
                   )}
@@ -207,7 +212,7 @@ const Login = () => {
                   
                   <Button
                     type="submit"
-                    className="w-full bg-[rgb(192,166,49)] hover:bg-[rgb(192,166,49)]/90"
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                     disabled={isSubmitting}
                   >
                     {isSubmitting 
@@ -221,7 +226,7 @@ const Login = () => {
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full"
+                      className="w-full border-primary/30"
                       onClick={() => setIsPhoneSubmitted(false)}
                     >
                       Change Phone Number
@@ -242,20 +247,20 @@ const Login = () => {
             <Button
               type="button"
               variant="outline"
-              className="w-full mb-4 border-[rgb(192,166,49)]/30"
+              className="w-full mb-4 border-primary/30 hover:bg-primary/10"
               onClick={handleGoogleLogin}
             >
-              <Globe className="mr-2 h-4 w-4" />
+              <Globe className="mr-2 h-4 w-4 text-primary" />
               Continue with Google
             </Button>
           </div>
           
-          <CardFooter className="flex flex-col space-y-2">
+          <CardFooter className="flex flex-col space-y-2 bg-gradient-to-r from-transparent to-primary/10 rounded-b-lg">
             <div className="text-center text-sm">
               Don&apos;t have an account?{" "}
               <Link
                 to="/register"
-                className="font-medium text-[rgb(192,166,49)] underline-offset-4 hover:underline"
+                className="font-medium text-primary underline-offset-4 hover:underline"
               >
                 Register
               </Link>
