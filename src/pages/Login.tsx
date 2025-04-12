@@ -12,25 +12,34 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { Mail, Lock, Phone, ArrowRight, Google } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 const Login = () => {
+  // Email login states
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+  // Phone login states
+  const [phone, setPhone] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [isPhoneSubmitted, setIsPhoneSubmitted] = useState(false);
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const { login, loginWithGoogle, loginWithPhone, verifyPhone } = useAuth();
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
 
     try {
       await login(email, password);
-      // Login successful
       toast({
         title: "Login successful",
         description: "Welcome back!",
@@ -47,67 +56,211 @@ const Login = () => {
     }
   };
 
+  const handlePhoneLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsSubmitting(true);
+
+    try {
+      if (!isPhoneSubmitted) {
+        await loginWithPhone(phone);
+        setIsPhoneSubmitted(true);
+      } else {
+        await verifyPhone(phone, verificationCode);
+      }
+    } catch (err) {
+      console.error("Phone login error:", err);
+      setError(
+        err instanceof Error 
+          ? err.message 
+          : "Phone verification failed. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError("");
+    try {
+      await loginWithGoogle();
+    } catch (err) {
+      setError(
+        err instanceof Error 
+          ? err.message 
+          : "Google login failed. Please try again."
+      );
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
-        <Card className="border-2">
+        <Card className="border-2 border-[rgb(192,166,49)]/20">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-center text-2xl">Login</CardTitle>
+            <CardTitle className="text-center text-2xl font-bold">Login</CardTitle>
             <CardDescription className="text-center">
-              Enter your email and password to access your account
+              Choose your preferred login method
             </CardDescription>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="********"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              {error && (
-                <div className="rounded-md bg-red-50 p-3 text-sm text-red-500">
-                  {error}
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-2">
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isSubmitting}
+          
+          <Tabs defaultValue="email" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="email">Email</TabsTrigger>
+              <TabsTrigger value="phone">Phone</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="email">
+              <form onSubmit={handleEmailLogin}>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="border-[rgb(192,166,49)]/30 focus-visible:ring-[rgb(192,166,49)]"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password" className="flex items-center gap-2">
+                        <Lock className="h-4 w-4" />
+                        Password
+                      </Label>
+                    </div>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="********"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="border-[rgb(192,166,49)]/30 focus-visible:ring-[rgb(192,166,49)]"
+                    />
+                  </div>
+                  
+                  {error && (
+                    <div className="rounded-md bg-red-50 p-3 text-sm text-red-500 dark:bg-red-900/20 dark:text-red-300">
+                      {error}
+                    </div>
+                  )}
+                  
+                  <Button
+                    type="submit"
+                    className="w-full bg-[rgb(192,166,49)] hover:bg-[rgb(192,166,49)]/90"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Signing in..." : "Sign in"}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </CardContent>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="phone">
+              <form onSubmit={handlePhoneLogin}>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      Phone Number
+                    </Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+1234567890"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      required
+                      disabled={isPhoneSubmitted}
+                      className="border-[rgb(192,166,49)]/30 focus-visible:ring-[rgb(192,166,49)]"
+                    />
+                  </div>
+                  
+                  {isPhoneSubmitted && (
+                    <div className="space-y-2">
+                      <Label htmlFor="code">Verification Code</Label>
+                      <Input
+                        id="code"
+                        type="text"
+                        placeholder="123456"
+                        value={verificationCode}
+                        onChange={(e) => setVerificationCode(e.target.value)}
+                        required
+                        className="border-[rgb(192,166,49)]/30 focus-visible:ring-[rgb(192,166,49)]"
+                      />
+                    </div>
+                  )}
+                  
+                  {error && (
+                    <div className="rounded-md bg-red-50 p-3 text-sm text-red-500 dark:bg-red-900/20 dark:text-red-300">
+                      {error}
+                    </div>
+                  )}
+                  
+                  <Button
+                    type="submit"
+                    className="w-full bg-[rgb(192,166,49)] hover:bg-[rgb(192,166,49)]/90"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting 
+                      ? "Processing..." 
+                      : isPhoneSubmitted 
+                        ? "Verify Code" 
+                        : "Send Code"}
+                  </Button>
+                  
+                  {isPhoneSubmitted && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setIsPhoneSubmitted(false)}
+                    >
+                      Change Phone Number
+                    </Button>
+                  )}
+                </CardContent>
+              </form>
+            </TabsContent>
+          </Tabs>
+          
+          <div className="px-6 pb-2">
+            <div className="relative flex items-center py-2">
+              <Separator className="flex-1" />
+              <span className="mx-2 text-xs text-muted-foreground">OR</span>
+              <Separator className="flex-1" />
+            </div>
+            
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full mb-4 border-[rgb(192,166,49)]/30"
+              onClick={handleGoogleLogin}
+            >
+              <Google className="mr-2 h-4 w-4" />
+              Continue with Google
+            </Button>
+          </div>
+          
+          <CardFooter className="flex flex-col space-y-2">
+            <div className="text-center text-sm">
+              Don&apos;t have an account?{" "}
+              <Link
+                to="/register"
+                className="font-medium text-[rgb(192,166,49)] underline-offset-4 hover:underline"
               >
-                {isSubmitting ? "Signing in..." : "Sign in"}
-              </Button>
-              <div className="text-center text-sm">
-                Don&apos;t have an account?{" "}
-                <Link
-                  to="/register"
-                  className="font-medium text-primary underline-offset-4 hover:underline"
-                >
-                  Register
-                </Link>
-              </div>
-            </CardFooter>
-          </form>
+                Register
+              </Link>
+            </div>
+          </CardFooter>
         </Card>
       </div>
     </div>

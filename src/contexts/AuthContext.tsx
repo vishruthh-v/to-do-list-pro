@@ -11,6 +11,9 @@ interface AuthContextType {
   session: Session | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  loginWithPhone: (phone: string) => Promise<void>;
+  verifyPhone: (phone: string, token: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -82,11 +85,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           data: {
             name,
           },
+          emailRedirectTo: `${window.location.origin}/login`,
         },
       });
 
       if (error) {
         throw error;
+      }
+
+      // Store email for verification page
+      if (email) {
+        sessionStorage.setItem("pendingVerificationEmail", email);
       }
 
       // Create profile entry
@@ -109,10 +118,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       toast({
         title: "Registration successful",
-        description: "You can now log in with your credentials",
+        description: "Please check your email to verify your account",
       });
       
-      navigate("/login");
+      navigate("/verify-email");
     } catch (error: any) {
       console.error("Registration failed", error);
       toast({
@@ -126,7 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // Login function
+  // Login with email and password
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
@@ -136,7 +145,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       if (error) {
-        throw error;
+        // Handle specific error cases
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password. Please check your credentials and try again.");
+        } else if (error.message.includes("Email not confirmed")) {
+          throw new Error("Please verify your email before logging in.");
+        } else {
+          throw error;
+        }
       }
 
       navigate("/dashboard");
@@ -150,6 +166,81 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       throw error;
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Login with Google
+  const loginWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error("Google login failed", error);
+      toast({
+        title: "Google login failed",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  // Login with Phone
+  const loginWithPhone = async (phone: string) => {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        phone,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Verification code sent",
+        description: "Please check your phone for the verification code",
+      });
+    } catch (error: any) {
+      console.error("Phone login failed", error);
+      toast({
+        title: "Phone login failed",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  // Verify phone OTP
+  const verifyPhone = async (phone: string, token: string) => {
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone,
+        token,
+        type: "sms",
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("Phone verification failed", error);
+      toast({
+        title: "Verification failed",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+      throw error;
     }
   };
 
@@ -186,6 +277,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     session,
     login,
     register,
+    loginWithGoogle,
+    loginWithPhone,
+    verifyPhone,
     logout,
     isAuthenticated: !!user,
     isLoading,
