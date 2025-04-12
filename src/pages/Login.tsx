@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, Phone, ArrowRight, Google } from "lucide-react";
+import { Mail, Lock, Phone, ArrowRight, Globe } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 const Login = () => {
@@ -245,7 +245,7 @@ const Login = () => {
               className="w-full mb-4 border-[rgb(192,166,49)]/30"
               onClick={handleGoogleLogin}
             >
-              <Google className="mr-2 h-4 w-4" />
+              <Globe className="mr-2 h-4 w-4" />
               Continue with Google
             </Button>
           </div>

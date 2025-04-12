@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
-import { Mail, User, Lock, Google, ArrowRight } from "lucide-react";
+import { Mail, User, Lock, Globe, ArrowRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 const Register = () => {
@@ -144,7 +144,7 @@ const Register = () => {
                 className="w-full border-[rgb(192,166,49)]/30"
                 onClick={handleGoogleLogin}
               >
-                <Google className="mr-2 h-4 w-4" />
+                <Globe className="mr-2 h-4 w-4" />
                 Continue with Google
               </Button>
             </CardContent>
