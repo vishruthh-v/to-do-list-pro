@@ -172,7 +172,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Login with Google
   const loginWithGoogle = async () => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/dashboard`,
@@ -180,12 +180,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       if (error) {
+        console.error("Google login error details:", error);
+        
         // Check if it's a provider not enabled error
         if (error.message.includes("provider is not enabled") || error.message.includes("Unsupported provider")) {
-          throw new Error("Google login is not enabled. Please contact the administrator to enable Google authentication.");
+          throw new Error("Google login is not enabled. Please ensure Google authentication is properly configured in your Supabase project settings.");
         }
         throw error;
       }
+      
+      // No need to navigate as the OAuth redirect will handle this
+      
     } catch (error: any) {
       console.error("Google login failed", error);
       toast({

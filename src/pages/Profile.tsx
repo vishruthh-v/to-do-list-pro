@@ -14,13 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
-import { Bell, Settings, User } from "lucide-react";
+import { Bell, Settings, Sun, Moon, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Profile = () => {
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   
   // Get user's name from user metadata or use email as fallback
@@ -50,6 +52,10 @@ const Profile = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const toggleDarkMode = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   return (
@@ -191,13 +197,21 @@ const Profile = () => {
                 <Switch defaultChecked />
               </div>
               <div className="flex items-center justify-between">
-                <div>
+                <div className="flex items-center gap-2">
                   <p className="font-medium">Dark Mode</p>
+                  {theme === "dark" ? (
+                    <Moon className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Sun className="h-4 w-4 text-primary" />
+                  )}
                   <p className="text-sm text-muted-foreground">
                     Toggle between light and dark themes
                   </p>
                 </div>
-                <Switch />
+                <Switch 
+                  checked={theme === "dark"} 
+                  onCheckedChange={toggleDarkMode}
+                />
               </div>
             </CardContent>
           </Card>
