@@ -1,11 +1,10 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 220 38% 98%; /* Soft blue-gray */
     --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
@@ -14,61 +13,66 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 48 59% 47%;
+    --primary: 246 80% 67%; /* Vibrant purple */
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 174 60% 60%; /* Teal */
     --secondary-foreground: 222.2 47.4% 11.2%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
+    --accent: 32 100% 60%; /* Orange */
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 48 59% 47%;
+    --border: 220 14% 90%;
+    --input: 220 14% 90%;
+    --ring: 246 80% 67%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
     /* Task Priority Colors */
-    --priority-low: 142.1 76.2% 36.3%;
-    --priority-medium: 47.9 95.8% 53.1%;
-    --priority-high: 0 84.2% 60.2%;
+    --priority-low: 162 70% 50%; /* Green-Teal */
+    --priority-medium: 48 100% 60%; /* Amber */
+    --priority-high: 0 80% 60%; /* Red */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 235 16% 15%; /* Deep blue-gray */
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 235 16% 18%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 235 16% 18%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 48 59% 47%;
+    --primary: 246 80% 67%;
     --primary-foreground: 0 0% 0%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 174 60% 40%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
+    --muted: 235 16% 22%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 32 100% 55%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 40.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 48 59% 47%;
+    --border: 235 16% 22%;
+    --input: 235 16% 22%;
+    --ring: 246 80% 67%;
+
+    /* Task Priority Colors */
+    --priority-low: 162 70% 40%;
+    --priority-medium: 48 100% 50%;
+    --priority-high: 0 80% 50%;
   }
 }
 
@@ -87,7 +91,7 @@
   .responsive-padding {
     @apply px-4 sm:px-6 md:px-8 lg:px-10;
   }
-  
+
   .responsive-card {
     @apply w-full sm:w-[90%] md:w-[450px] lg:w-[500px] mx-auto;
   }

@@ -1,15 +1,11 @@
-
 import React, { useState } from "react";
 import { useTask, Task } from "@/contexts/TaskContext";
 import { TaskCard } from "@/components/TaskCard";
 import { TaskModal } from "@/components/TaskModal";
+import { Analytics } from "@/components/Analytics";
+import { CalendarView } from "@/components/CalendarView";
 import { Button } from "@/components/ui/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
@@ -82,6 +78,12 @@ const Dashboard = () => {
           Add Task
         </Button>
       </div>
+
+      {/* Analytics Section */}
+      <Analytics tasks={tasks} />
+
+      {/* Calendar View */}
+      <CalendarView tasks={tasks} />
 
       <Tabs
         defaultValue="today"
